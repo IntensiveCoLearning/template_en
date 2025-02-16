@@ -145,4 +145,5 @@ To create a personal access token with collaborator invitation permissions, plea
 | ---------- | ------------------------- | ---------- |
 | START_DATE | 2025-06-24T00:00:00+00:00 | Start time |
 | END_DATE   | 2025-07-06T23:59:59+00:00 | End time   |
+
 ![image](https://github.com/user-attachments/assets/a031eac8-747c-435a-b69c-502cf2e91f12)
