@@ -62,7 +62,7 @@ Rewards for successful check-ins：https://www.notion.so/lxdao/3eab258b4df44c9cb
 
 ## Registration and Check-In Rules
 
-Since the registration and check-in for Intensive Co-Learning are conducted via GitHub, if you are not a developer or are unfamiliar with git operations, please read this document first: [残酷共学 GitHub 新手教程](https://www.notion.so/lxdao/GitHub-bd65b981146947fea1fb675942567a45)
+Since the registration and check-in for Intensive Co-Learning are conducted via GitHub, if you are not a developer or are unfamiliar with git operations, please read this document first: [Intensive Co-learning GitHub Beginner's Guide](https://www.notion.so/lxdao/GitHub-bd65b981146947fea1fb675942567a45)
 
 - Registration:
 
@@ -133,9 +133,15 @@ To create a personal access token with collaborator invitation permissions, plea
 
 6. Add the token value to your repository secrets: follow the above steps to add your personal access token to your repository's secrets, and name it `PAT_WITH_INVITE_PERMISSIONS`.
 
+![image](https://github.com/user-attachments/assets/8aebaf92-af33-4103-8f71-ae1b90e25004)
+![image](https://github.com/user-attachments/assets/8d1eee42-1b28-4e02-8da6-9ec058a87f0d)
+
+
 ### Configure Co-learning Information Configuration Variables
 
 - Configure these two repository variables (Repository variables). Make sure not to add any line breaks or spaces.
+![image](https://github.com/user-attachments/assets/a031eac8-747c-435a-b69c-502cf2e91f12)
+
 
 | Field Name | Value                     | Comments   |
 | ---------- | ------------------------- | ---------- |
