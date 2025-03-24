@@ -28,7 +28,6 @@ STATS_END_MARKER = "<!-- STATISTICALDATA_END -->"
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-
 def print_env():
     print(f"""
             START_DATE: {START_DATE}
@@ -43,7 +42,6 @@ def print_env():
             TABLE_END_MARKER: {TABLE_END_MARKER}
             """)
 
-
 def print_variables(*args, **kwargs):
     def format_value(value):
         if isinstance(value, str) and ('\n' in value or '\r' in value):
@@ -52,17 +50,14 @@ def print_variables(*args, **kwargs):
 
     variables = {}
 
-    # processing positional arguments
     for arg in args:
         if isinstance(arg, dict):
             variables.update(arg)
         else:
             variables[arg] = eval(arg)
 
-    # processing keyword arguments
     variables.update(kwargs)
 
-    # print variables
     for name, value in variables.items():
         print(f"{name}: {format_value(value)}")
 
@@ -72,26 +67,17 @@ def get_date_range():
 
 
 def get_user_timezone(file_content):
-    """
-    Extracts the timezone from the file content, supporting IANA timezone names
-    (e.g., 'Asia/Shanghai') and UTC offsets (e.g., 'UTC+8').
-    If no valid timezone is found, defaults to DEFAULT_TIMEZONE.
-    """
     yaml_match = re.search(r'---\s*\ntimezone:\s*(\S+)\s*\n---', file_content)
     if yaml_match:
         timezone_str = yaml_match.group(1)
         try:
-            # Attempt to interpret as a named timezone (e.g., "Asia/Shanghai")
             return pytz.timezone(timezone_str)
         except pytz.exceptions.UnknownTimeZoneError:
-            # If named timezone fails, attempt to interpret as a UTC offset
             try:
-                # Convert UTC offset string to a fixed offset timezone
                 offset = int(timezone_str[3:])  # Extract the offset value
                 return pytz.FixedOffset(offset * 60)  # Offset in minutes
             except ValueError:
-                logging.warning(
-                    f"Invalid timezone format: {timezone_str}. Using default {DEFAULT_TIMEZONE}.")
+                logging.warning(f"Invalid timezone format: {timezone_str}. Using default {DEFAULT_TIMEZONE}.")
                 return pytz.timezone(DEFAULT_TIMEZONE)
     return pytz.timezone(DEFAULT_TIMEZONE)
 
@@ -115,15 +101,13 @@ def find_date_in_content(content, local_date):
         r'###\s*' + local_date.strftime("%Y.%m.%d").replace('.0', '.'),
         r'#\s*' + local_date.strftime("%m.%d").lstrip('0').replace('.0', '.'),
         r'##\s*' + local_date.strftime("%m.%d").lstrip('0').replace('.0', '.'),
-        r'###\s*' +
-        local_date.strftime("%m.%d").lstrip('0').replace('.0', '.'),
+        r'###\s*' + local_date.strftime("%m.%d").lstrip('0').replace('.0', '.'),
         r'#\s*' + local_date.strftime("%Y/%m/%d"),
         r'##\s*' + local_date.strftime("%Y/%m/%d"),
         r'###\s*' + local_date.strftime("%Y/%m/%d"),
         r'#\s*' + local_date.strftime("%m/%d").lstrip('0').replace('/0', '/'),
         r'##\s*' + local_date.strftime("%m/%d").lstrip('0').replace('/0', '/'),
-        r'###\s*' +
-        local_date.strftime("%m/%d").lstrip('0').replace('/0', '/'),
+        r'###\s*' + local_date.strftime("%m/%d").lstrip('0').replace('/0', '/'),
         r'#\s*' + local_date.strftime("%m.%d").zfill(5),
         r'##\s*' + local_date.strftime("%m.%d").zfill(5),
         r'###\s*' + local_date.strftime("%m.%d").zfill(5)
@@ -143,19 +127,16 @@ def get_content_for_date(content, start_pos):
 def check_md_content(file_content, date, user_tz):
     try:
         content = extract_content_between_markers(file_content)
-        local_date = date.astimezone(user_tz).replace(
-            hour=0, minute=0, second=0, microsecond=0)
+        local_date = date.astimezone(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
         current_date_match = find_date_in_content(content, local_date)
 
         if not current_date_match:
-            logging.info(
-                f"No match found for date {local_date.strftime('%Y-%m-%d')}")
+            logging.info(f"No match found for date {local_date.strftime('%Y-%m-%d')}")
             return False
 
         date_content = get_content_for_date(content, current_date_match.end())
         date_content = re.sub(r'\s', '', date_content)
-        logging.info(
-            f"Content length for {local_date.strftime('%Y-%m-%d')}: {len(date_content)}")
+        logging.info(f"Content length for {local_date.strftime('%Y-%m-%d')}: {len(date_content)}")
         return len(date_content) > 10
     except Exception as e:
         logging.error(f"Error in check_md_content: {str(e)}")
@@ -169,48 +150,39 @@ def get_user_study_status(nickname):
         with open(file_name, 'r', encoding='utf-8') as file:
             file_content = file.read()
         user_tz = get_user_timezone(file_content)
-        logging.info(
-            f"File content length for {nickname}: {len(file_content)} user_tz: {user_tz}")
-        current_date = datetime.now(user_tz).replace(
-            hour=0, minute=0, second=0, microsecond=0)  # - timedelta(days=1)
+        logging.info(f"File content length for {nickname}: {len(file_content)} user_tz: {user_tz}")
+        current_date = datetime.now(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
 
         for date in get_date_range():
-            local_date = date.astimezone(user_tz).replace(
-                hour=0, minute=0, second=0, microsecond=0)
+            local_date = date.astimezone(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
 
             if date.day == current_date.day:
-                user_status[date] = "✅" if check_md_content(
-                    file_content, date, pytz.UTC) else " "
+                user_status[date] = "✅" if check_md_content(file_content, date, pytz.UTC) else " "
+
             elif date > current_date:
                 user_status[date] = " "
             else:
-                user_status[date] = "✅" if check_md_content(
-                    file_content, date, pytz.UTC) else "⭕️"
+                user_status[date] = "✅" if check_md_content(file_content, date, pytz.UTC) else "⭕️"
 
         logging.info(f"Successfully processed file for user: {nickname}")
     except FileNotFoundError:
         logging.error(f"Error: Could not find file {file_name}")
         user_status = {date: "⭕️" for date in get_date_range()}
     except Exception as e:
-        logging.error(
-            f"Unexpected error processing file for {nickname}: {str(e)}")
+        logging.error(f"Unexpected error processing file for {nickname}: {str(e)}")
         user_status = {date: "⭕️" for date in get_date_range()}
     return user_status
 
 
 def check_weekly_status(user_status, date, user_tz):
     try:
-        local_date = date.astimezone(user_tz).replace(
-            hour=0, minute=0, second=0, microsecond=0)
+        local_date = date.astimezone(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = (local_date - timedelta(days=local_date.weekday()))
         week_dates = [week_start + timedelta(days=x) for x in range(7)]
-        current_date = datetime.now(user_tz).replace(
-            hour=0, minute=0, second=0, microsecond=0)
-        week_dates = [d for d in week_dates if d.astimezone(pytz.UTC).date() in [
-            date.date() for date in get_date_range()] and d <= min(local_date, current_date)]
+        current_date = datetime.now(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
+        week_dates = [d for d in week_dates if d.astimezone(pytz.UTC).date() in [date.date() for date in get_date_range()] and d <= min(local_date, current_date)]
 
-        missing_days = sum(1 for d in week_dates if user_status.get(datetime.combine(
-            d.astimezone(pytz.UTC).date(), datetime.min.time()).replace(tzinfo=pytz.UTC), "⭕️") == "⭕️")
+        missing_days = sum(1 for d in week_dates if user_status.get(datetime.combine(d.astimezone(pytz.UTC).date(), datetime.min.time()).replace(tzinfo=pytz.UTC), "⭕️") == "⭕️")
 
         if local_date == current_date and missing_days > 2:
             return "❌"
@@ -233,14 +205,10 @@ def get_all_user_files():
 
 
 def extract_name_from_row(row):
-    """
-    Extracts the username from a table row, handling Markdown links.
-    """
     match = re.match(r'\|\s*\[([^\]]+)\]\([^)]+\)\s*\|', row)
     if match:
-        return match.group(1).strip()  # Extract the name from the link
+        return match.group(1).strip()
     else:
-        # If not a Markdown link, return the content before the first "|"
         parts = row.split('|')
         if len(parts) > 1:
             return parts[1].strip()
@@ -252,22 +220,18 @@ def update_readme(content):
         start_index = content.find(TABLE_START_MARKER)
         end_index = content.find(TABLE_END_MARKER)
         if start_index == -1 or end_index == -1:
-            logging.error(
-                "Error: Couldn't find the table markers in README.md")
+            logging.error("Error: Couldn't find the table markers in README.md")
             return content
 
         new_table = [
             f'{TABLE_START_MARKER}\n',
-            f'| {FIELD_NAME} | ' +
-            ' | '.join(date.strftime("%m.%d").lstrip('0')
+            f'| {FIELD_NAME} | ' + ' | '.join(date.strftime("%m.%d").lstrip('0')
                        for date in get_date_range()) + ' |\n',
-            '| ------------- | ' +
-            ' | '.join(['----' for _ in get_date_range()]) + ' |\n'
+            '| ------------- | ' + ' | '.join(['----' for _ in get_date_range()]) + ' |\n'
         ]
 
         existing_users = set()
-        table_rows = content[start_index +
-                             len(TABLE_START_MARKER):end_index].strip().split('\n')[2:]
+        table_rows = content[start_index + len(TABLE_START_MARKER):end_index].strip().split('\n')[2:]
 
         for row in table_rows:
             user_name = extract_name_from_row(row)
@@ -318,12 +282,10 @@ def generate_user_row(user):
 
     user_tz = get_user_timezone(file_content)
 
-    user_current_day = datetime.now(user_tz).replace(
-        hour=0, minute=0, second=0, microsecond=0)
+    user_current_day = datetime.now(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
     for date in get_date_range():
         # Compare the user's time zone with local time. If the user's check-in time is later than the local time, do not subtract - timedelta(days=1)
-        user_datetime = date.astimezone(pytz.UTC).replace(
-            hour=0, minute=0, second=0, microsecond=0)
+        user_datetime = date.astimezone(pytz.UTC).replace(hour=0, minute=0, second=0, microsecond=0)
         if is_eliminated or (user_datetime > user_current_day and user_datetime.day > user_current_day.day):
             new_row += " |"
         else:
@@ -367,8 +329,7 @@ def get_repo_info():
                 raise ValueError("Unsupported remote URL format")
             repo = re.sub(r'\.git$', '', repo)
         except subprocess.CalledProcessError:
-            logging.error(
-                "Failed to get repository information from git config")
+            logging.error("Failed to get repository information from git config")
             return None, None
     return owner, repo
 
@@ -399,8 +360,7 @@ def calculate_statistics(content):
         logging.error("Error: Couldn't find the stats markers in README.md")
         return None
 
-    stats_content = content[start_index +
-                            len(STATS_START_MARKER):end_index].strip()
+    stats_content = content[start_index + len(STATS_START_MARKER):end_index].strip()
 
     # Initialize variables to store statistics
     stats = {
@@ -412,7 +372,6 @@ def calculate_statistics(content):
         "fork_count": 0
     }
 
-    # Use regular expressions to extract the data.  Handle missing data gracefully.
     total_match = re.search(r"- Total Participants:\s*(\d+)", stats_content)
     if total_match:
         stats["total_participants"] = int(total_match.group(1))
@@ -465,6 +424,45 @@ def update_statistics(content, stats):
 
     return content[:start_index] + stats_text + content[end_index + len(STATS_END_MARKER):]
 
+def update_statistics_after_end(content, user_files):
+    current_time = datetime.now(pytz.UTC)
+    stats = {
+        "total_participants": len(user_files),
+        "eliminated_participants": 0,
+        "completed_participants": 0,
+        "perfect_attendance_users": [],
+        "completed_users": [],
+        "fork_count": get_fork_count() or 0
+    }
+
+    start_index = content.find(TABLE_START_MARKER)
+    end_index = content.find(TABLE_END_MARKER)
+    if start_index == -1 or end_index == -1:
+        logging.error("Error: Couldn't find the table markers in README.md")
+        return content
+
+    table_content = content[start_index + len(TABLE_START_MARKER):end_index].strip()
+    table_rows = table_content.split('\n')[2:]
+    
+    for row in table_rows:
+        user_name = extract_name_from_row(row)
+        if not user_name:
+            continue
+
+        is_eliminated = "❌" in row
+        
+        if is_eliminated:
+            stats["eliminated_participants"] += 1
+        else:
+            stats["completed_users"].append(user_name)
+            stats["completed_participants"] += 1
+            
+            if "⭕️" not in row:
+                check_marks = row.count("✅")
+                if check_marks > 0:
+                    stats["perfect_attendance_users"].append(user_name)
+
+    return update_statistics(content, stats)
 
 def main():
     try:
@@ -474,17 +472,24 @@ def main():
         logging.error(f"Error: Could not find file {README_FILE}")
         return
 
-    content = update_readme(content)
-    stats = calculate_statistics(content)
+    current_time = datetime.now(pytz.UTC)
+    user_files = get_all_user_files()
 
-    if stats:
-        content = update_statistics(content, stats)
+    content = update_readme(content)
+
+    if current_time > END_DATE:
+        content = update_statistics_after_end(content, user_files)
+        logging.info("Activity has ended. Final statistics have been calculated and updated.")
+    else:
+        stats = calculate_statistics(content)
+        if stats:
+            content = update_statistics(content, stats)
+        logging.info(f"Updated {README_FILE} - Activity still in progress")
 
     with open(README_FILE, 'w', encoding='utf-8') as file:
         file.write(content)
 
     logging.info(f"Successfully updated {README_FILE}")
-
 
 if __name__ == "__main__":
     main()
