@@ -14,13 +14,13 @@ Target Audience placeholder
 
 ## Registration Period
 
-- Start Date: 
-- End Date: 
+- Registration Start Date: 
+- Registration End Date: 
 
 ## Study Duration
 
-- Start Date: 
-- End Date: 
+- Study Start Date: 
+- Study End Date: 
 
 ## Initiator
 
