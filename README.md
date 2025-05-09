@@ -1,64 +1,57 @@
-# Intensive Co-learning Template
-
-> This document serves as a general template for creating an Intensive Co-learning – English version. Please follow the template structure to fill in your Intensive Co-learning content and replace the {} placeholders with the appropriate information.
-
-# {Your Intensive Co-learning Name} <img alt="logo" height="80px" width="80px" src="{Intensive Co-learning Name logo image URL，remove if not applicable}" />
+# Your Intensive Co-learning Name
 
 ## Introduction
 
-{Introduction to the Intensive Co-learning}
+Introduction placeholder
 
 ## Keywords
 
-{Keywords or tags related to the Intensive Co-learning to help participants quickly search and locate it, such as DeFi, DAO, English, etc. Please use English word and separate them with commas (,)}
+Keywords placeholder
 
 ## Target Audience
 
-{The primary audience for this Intensive Co-learning. For example, if it is specifically for programmers, those without relevant skills and experience may not need to participate.}
+Target Audience placeholder
 
 ## Registration Period
 
-- Start Date: {Registration start date, format: yyyy-mm-dd, e.g., 2025-11-01}
-- End Date: {Registration end date, format: yyyy-mm-dd, e.g., 2025-11-01}
+- Start Date: 
+- End Date: 
 
 ## Study Duration
 
-- Start Date: {Official start date of the Intensive Co-learning, format: yyyy-mm-dd, e.g., 2025-11-01}
-- End Date: {Official end date of the Intensive Co-learning, format: yyyy-mm-dd, e.g., 2025-11-01}
+- Start Date: 
+- End Date: 
 
 ## Initiator
 
-- Name: {Intensive Co-learning initiator's name}
-- GitHub ID: {Intensive Co-learning initiator's GitHub ID}
-- Telegram: {Intensive Co-learning initiator's Telegram ID}
-- Email: {Intensive Co-learning initiator's email}
+- Name: 
+- GitHub ID: 
+- Telegram: 
+- Email: 
 
 ## Organizations
 
-- {The organizing entities of the Intensive Co-learning. There can be multiple. Please fill in the organization name, link, and logo as shown below.}
-  [LXDAO](https://lxdao.io/) <img alt="organization-logo" height="60px" width="60px" src="https://avatars.githubusercontent.com/u/167147327?s=200&v=4" />
+The organizing entities of the Intensive Co-learning. There can be multiple. 
 
 ## Leave Rules
 
-Allowed {Number of times leave} days leave per week.
+Allowed 2 days leave per week.
 
 ## Community
 
-Telegram：{Intensive Co-learning Telegram channel link for discussions}
+Telegram：
 
 ## Learning Materials / Course Schedule
 
-{This section should be written in Markdown format. Learning materials must be provided. If there are live lessons by mentors, include the course schedule and mentor information.}
+Learning materials content
 
 ## Study Rewards
 
-{This section should be written in Markdown format. Rewards are optional. If there are no specific rewards, you can either leave this blank or write some motivational words.}
-{The following are existing Intensive Co-learning benefits, which are recommended to be retained:}
 Rewards for successful check-ins：https://www.notion.so/lxdao/3eab258b4df44c9cb97319452b2be13b
 
 ## Additional Information
 
-{This section should be written in Markdown format and is optional. If there is any relevant information not covered in the above sections, it can be included here.}
+more information
 
 ## Registration and Check-In Rules
 
@@ -111,39 +104,3 @@ Since the registration and check-in for Intensive Co-Learning are conducted via 
 
 <!-- STATISTICALDATA_START -->
 <!-- STATISTICALDATA_END -->
-
-> If you are the initiator of this intensive co-learning program, please follow the steps below to set up the automated permission granting. Once completed, remove this section from your repository.
-
-### Create a Personal Access Token with Invitation Permissions for Your [Intensive Co-Learning]
-
-To create a personal access token with collaborator invitation permissions, please follow these steps:
-
-1. Navigate to your personal settings: go to https://github.com/settings/profile and log in to your GitHub account.
-
-2. Access the Personal Access Tokens page: in the left menu, click on "Developer settings", then select "Personal access tokens".
-
-3. Create a new token: click the "Generate new token" button and choose the Classic token option.
-
-4. Name your token: in the Token name field, enter a descriptive name, for example invite-collaborators.
-
-5. Select the appropriate scopes: in the "Scopes" section, choose the permissions needed for your token. For inviting collaborators, you need to grant the following scope:
-
-- `repo:invite`: Allows your token to create repository invitations. It is recommended to grant this token full repo permissions.
-- Only users with `admin:org` privileges can create personal access tokens with collaborator invitation permissions.
-
-6. Add the token value to your repository secrets: follow the above steps to add your personal access token to your repository's secrets, and name it `PAT_WITH_INVITE_PERMISSIONS`.
-
-![image](https://github.com/user-attachments/assets/8aebaf92-af33-4103-8f71-ae1b90e25004)
-![image](https://github.com/user-attachments/assets/8d1eee42-1b28-4e02-8da6-9ec058a87f0d)
-
-
-### Configure Co-learning Information Configuration Variables
-
-- Configure these two repository variables (Repository variables). Make sure not to add any line breaks or spaces.
-
-| Field Name | Value                     | Comments   |
-| ---------- | ------------------------- | ---------- |
-| START_DATE | 2025-06-24T00:00:00+00:00 | Start time |
-| END_DATE   | 2025-07-06T23:59:59+00:00 | End time   |
-
-![image](https://github.com/user-attachments/assets/a031eac8-747c-435a-b69c-502cf2e91f12)
