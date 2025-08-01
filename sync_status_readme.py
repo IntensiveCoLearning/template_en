@@ -7,10 +7,8 @@ import pytz
 import logging
 
 # Constants
-START_DATE = datetime.fromisoformat(os.environ.get(
-    'START_DATE', '2025-01-06T00:00:00+00:00')).replace(tzinfo=pytz.UTC)
-END_DATE = datetime.fromisoformat(os.environ.get(
-    'END_DATE', '2025-01-26T23:59:59+00:00')).replace(tzinfo=pytz.UTC)
+START_DATE = datetime.fromisoformat(os.environ['START_DATE']).replace(tzinfo=pytz.UTC)
+END_DATE = datetime.fromisoformat(os.environ['END_DATE']).replace(tzinfo=pytz.UTC)
 DEFAULT_TIMEZONE = 'Asia/Shanghai'
 FILE_SUFFIX = '.md'
 README_FILE = 'README.md'
@@ -108,6 +106,9 @@ def find_date_in_content(content, local_date):
         r'#\s*' + local_date.strftime("%m/%d").lstrip('0').replace('/0', '/'),
         r'##\s*' + local_date.strftime("%m/%d").lstrip('0').replace('/0', '/'),
         r'###\s*' + local_date.strftime("%m/%d").lstrip('0').replace('/0', '/'),
+        r'#\s*' + local_date.strftime("%Y-%m-%d"),
+        r'##\s*' + local_date.strftime("%Y-%m-%d"),
+        r'###\s*' + local_date.strftime("%Y-%m-%d"),
         r'#\s*' + local_date.strftime("%m.%d").zfill(5),
         r'##\s*' + local_date.strftime("%m.%d").zfill(5),
         r'###\s*' + local_date.strftime("%m.%d").zfill(5)
@@ -117,7 +118,7 @@ def find_date_in_content(content, local_date):
 
 
 def get_content_for_date(content, start_pos):
-    next_date_pattern = r'###\s*(\d{4}\.)?(\d{1,2}[\.\/]\d{1,2})'
+    next_date_pattern = r'#+\s*(\d{4}[\.\/\-])?(\d{1,2}[\.\/\-]\d{1,2})'
     next_date_match = re.search(next_date_pattern, content[start_pos:])
     if next_date_match:
         return content[start_pos:start_pos + next_date_match.start()]
@@ -155,15 +156,12 @@ def get_user_study_status(nickname):
 
         for date in get_date_range():
             local_date = date.astimezone(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
-
-            if date.day == current_date.day:
-                user_status[date] = "✅" if check_md_content(file_content, date, pytz.UTC) else " "
-
-            elif date > current_date:
+            if local_date.date() == current_date.date():
+                user_status[date] = "✅" if check_md_content(file_content, date, user_tz) else " "
+            elif local_date > current_date:
                 user_status[date] = " "
             else:
-                user_status[date] = "✅" if check_md_content(file_content, date, pytz.UTC) else "⭕️"
-
+                user_status[date] = "✅" if check_md_content(file_content, date, user_tz) else "⭕️"
         logging.info(f"Successfully processed file for user: {nickname}")
     except FileNotFoundError:
         logging.error(f"Error: Could not find file {file_name}")
@@ -180,9 +178,11 @@ def check_weekly_status(user_status, date, user_tz):
         week_start = (local_date - timedelta(days=local_date.weekday()))
         week_dates = [week_start + timedelta(days=x) for x in range(7)]
         current_date = datetime.now(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
-        week_dates = [d for d in week_dates if d.astimezone(pytz.UTC).date() in [date.date() for date in get_date_range()] and d <= min(local_date, current_date)]
+        week_dates = [d for d in week_dates if d.astimezone(pytz.UTC).date() in [
+            date.date() for date in get_date_range()] and d <= min(local_date, current_date)]
 
-        missing_days = sum(1 for d in week_dates if user_status.get(datetime.combine(d.astimezone(pytz.UTC).date(), datetime.min.time()).replace(tzinfo=pytz.UTC), "⭕️") == "⭕️")
+        missing_days = sum(1 for d in week_dates if user_status.get(datetime.combine(
+            d.astimezone(pytz.UTC).date(), datetime.min.time()).replace(tzinfo=pytz.UTC), "⭕️") == "⭕️")
 
         if local_date == current_date and missing_days > 2:
             return "❌"
@@ -267,47 +267,57 @@ def generate_user_row(user):
     user_link = f"[{user}]({repo_url})"
     new_row = f"| {user_link} |"
     is_eliminated = False
-    absent_count = 0
-    current_week = None
 
     file_name_to_open = f"{user}{FILE_SUFFIX}"
 
     try:
         with open(file_name_to_open, 'r', encoding='utf-8') as file:
             file_content = file.read()
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logging.error(f"Error: Could not find file {file_name_to_open}")
-        # return a default line containing "⭕️" or take alternative error handling measures
         return "| " + user_link + " | " + " ⭕️ |" * len(get_date_range()) + "\n"
 
     user_tz = get_user_timezone(file_content)
 
     user_current_day = datetime.now(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
-    for date in get_date_range():
-        # Compare the user's time zone with local time. If the user's check-in time is later than the local time, do not subtract - timedelta(days=1)
+    date_range = get_date_range()
+    
+    for i, date in enumerate(date_range):
         user_datetime = date.astimezone(pytz.UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-        if is_eliminated or (user_datetime > user_current_day and user_datetime.day > user_current_day.day):
+        
+        if is_eliminated:
             new_row += " |"
+            continue
+            
+        local_datetime = user_datetime.astimezone(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
+        if local_datetime > user_current_day:
+            new_row += " |"
+            continue
+            
+        days_from_start = (user_datetime.date() - START_DATE.date()).days
+        week_number = days_from_start // 7
+        
+        cycle_start_day = week_number * 7
+        cycle_end_day = min(cycle_start_day + 6, len(date_range) - 1)
+        
+        absent_count = 0
+        for day_idx in range(cycle_start_day, min(cycle_end_day + 1, i + 1)):
+            if day_idx < len(date_range):
+                check_date = date_range[day_idx].astimezone(pytz.UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+                check_date_local = check_date.astimezone(user_tz).replace(hour=0, minute=0, second=0, microsecond=0)
+                if check_date_local <= user_current_day:
+                    status = user_status.get(check_date, "⭕️")
+                    if status == "⭕️":
+                        absent_count += 1
+        
+        current_status = user_status.get(user_datetime, "⭕️")
+        
+        if absent_count > 2:
+            is_eliminated = True
+            new_row += " ❌ |"
         else:
-            user_date = user_datetime
-            # check if it's a new week
-            week = user_date.isocalendar()[1]  # get the ISO calendar week number
-            if week != current_week:
-                current_week = week
-                absent_count = 0  # reset absence count
-
-            status = user_status.get(user_date, "")
-
-            if status == "⭕️":
-                absent_count += 1
-                if absent_count > 2:
-                    is_eliminated = True
-                    new_row += " ❌ |"
-                else:
-                    new_row += " ⭕️ |"
-            else:
-                new_row += f" {status} |"
-
+            new_row += f" {current_status} |"
+            
     return new_row + '\n'
 
 
