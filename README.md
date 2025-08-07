@@ -47,7 +47,7 @@ Learning materials content
 
 ## Study Rewards
 
-Rewards for successful check-ins：https://www.notion.so/lxdao/3eab258b4df44c9cb97319452b2be13b
+The greatest reward is gaining knowledge!
 
 ## Additional Information
 
