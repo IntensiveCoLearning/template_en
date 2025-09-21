@@ -1,7 +1,6 @@
 import os
 import subprocess
 import re
-import requests
 from datetime import datetime, timedelta
 import pytz
 import logging
@@ -350,23 +349,6 @@ def get_repo_info():
     return owner, repo
 
 
-def get_fork_count():
-    owner, repo = get_repo_info()
-    if not owner or not repo:
-        logging.error("Failed to get repository information")
-        return None
-
-    api_url = f"https://api.github.com/repos/{owner}/{repo}"
-
-    try:
-        response = requests.get(api_url)
-        response.raise_for_status()
-        repo_data = response.json()
-        return repo_data['forks_count']
-    except requests.RequestException as e:
-        logging.error(f"Error fetching fork count: {e}")
-        return None
-
 
 def calculate_statistics(content):
     start_index = content.find(STATS_START_MARKER)
@@ -384,8 +366,7 @@ def calculate_statistics(content):
         "eliminated_participants": 0,
         "completed_participants": 0,
         "perfect_attendance_users": [],
-        "completed_users": [],
-        "fork_count": 0
+        "completed_users": []
     }
 
     total_match = re.search(r"- Total Participants:\s*(\d+)", stats_content)
@@ -411,10 +392,6 @@ def calculate_statistics(content):
     if eliminated_match:
         stats["eliminated_participants"] = int(eliminated_match.group(1))
 
-    fork_count_match = re.search(r"- Fork Count:\s*(\d+)", stats_content)
-    if fork_count_match:
-        stats["fork_count"] = int(fork_count_match.group(1))
-
     return stats
 
 
@@ -435,7 +412,6 @@ def update_statistics(content, stats):
 - Perfect Attendance Users: {', '.join(stats['perfect_attendance_users'])}
 - Failed Participants: {stats["eliminated_participants"]}
 - Failed Rate: {stats["total_participants"] and stats["eliminated_participants"] / stats["total_participants"]:.2%}
-- Fork Count: {stats["fork_count"]}
 {STATS_END_MARKER}"""
 
     return content[:start_index] + stats_text + content[end_index + len(STATS_END_MARKER):]
@@ -447,8 +423,7 @@ def update_statistics_after_end(content, user_files):
         "eliminated_participants": 0,
         "completed_participants": 0,
         "perfect_attendance_users": [],
-        "completed_users": [],
-        "fork_count": get_fork_count() or 0
+        "completed_users": []
     }
 
     start_index = content.find(TABLE_START_MARKER)
