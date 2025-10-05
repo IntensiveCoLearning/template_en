@@ -55,9 +55,9 @@ more information
 
 ## Registration and Check-In Rules
 
-- Registration: https://www.notion.so/lxdao/232dceffe40b8030993ad26f2eb6bed2
+- Registration Guide: https://www.notion.so/lxdao/Registration-Guide-283dceffe40b80e883fddfa045afef5e
 
-- Check-In: https://www.notion.so/lxdao/232dceffe40b80508330c5ee936d4dab
+- Check-in Guide: https://www.notion.so/lxdao/Check-in-Guide-283dceffe40b80ad9936db5a15468eb5
 
 ## Intensive Co-learning Check-In Record Table
 
