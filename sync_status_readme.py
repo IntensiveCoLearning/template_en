@@ -12,6 +12,7 @@ DEFAULT_TIMEZONE = 'Asia/Shanghai'
 FILE_SUFFIX = '.md'
 README_FILE = 'README.md'
 FIELD_NAME = 'Name'
+NOTES_DIR = 'notes'
 Content_START_MARKER = "<!-- Content_START -->"
 Content_END_MARKER = "<!-- Content_END -->"
 TABLE_START_MARKER = "<!-- START_COMMIT_TABLE -->"
@@ -33,6 +34,7 @@ def print_env():
             FILE_SUFFIX: {FILE_SUFFIX}
             README_FILE: {README_FILE}
             FIELD_NAME: {FIELD_NAME}
+            NOTES_DIR: {NOTES_DIR}
             Content_START_MARKER: {Content_START_MARKER}
             Content_END_MARKER: {Content_END_MARKER}
             TABLE_START_MARKER: {TABLE_START_MARKER}
@@ -194,7 +196,7 @@ def check_md_content(file_content, date, user_tz):
 
 def get_user_study_status(nickname):
     user_status = {}
-    file_name = f"{nickname}{FILE_SUFFIX}"
+    file_name, _ = get_user_file_path(nickname)
     try:
         with open(file_name, 'r', encoding='utf-8') as file:
             file_content = file.read()
@@ -254,9 +256,35 @@ def check_weekly_status(user_status, date, user_tz):
 
 def get_all_user_files():
     exclude_prefixes = ('template', 'readme')
-    return [f[:-len(FILE_SUFFIX)] for f in os.listdir('.')
-            if f.lower().endswith(FILE_SUFFIX.lower())
-            and not f.lower().startswith(exclude_prefixes)]
+    users = {}
+
+    if os.path.isdir(NOTES_DIR):
+        for f in os.listdir(NOTES_DIR):
+            if not f.lower().endswith(FILE_SUFFIX.lower()):
+                continue
+            if f.lower().startswith(exclude_prefixes):
+                continue
+            users[f[:-len(FILE_SUFFIX)]] = os.path.join(NOTES_DIR, f)
+
+    for f in os.listdir('.'):
+        if not f.lower().endswith(FILE_SUFFIX.lower()):
+            continue
+        if f.lower().startswith(exclude_prefixes):
+            continue
+        user = f[:-len(FILE_SUFFIX)]
+        if user not in users:
+            users[user] = f
+
+    return list(users.keys())
+
+def get_user_file_path(nickname: str):
+    notes_path = os.path.join(NOTES_DIR, f"{nickname}{FILE_SUFFIX}")
+    root_path = f"{nickname}{FILE_SUFFIX}"
+    if os.path.exists(notes_path):
+        return notes_path, True
+    if os.path.exists(root_path):
+        return root_path, False
+    return notes_path, True
 
 
 def extract_name_from_row(row):
@@ -271,35 +299,37 @@ def extract_name_from_row(row):
 
 def extract_allowed_leave_quota(content, default_quota=2):
     """
-    从 README 内容中解析“请假规则”下的“每周请假 X 次”并返回 X 作为每周可请假次数。
-    若未解析到，返回默认值 default_quota（保持向后兼容，默认为 2）。
+    Parse the leave quota in "Leave Rules" (or "请假规则") section and return
+    the number of allowed leaves per week.
     """
     try:
-        # 定位到“## 请假规则”标题所在的段落
-        header_pattern = re.compile(r"^##\s*请假规则\s*$", re.MULTILINE)
+        # Locate "## Leave Rules" or "## 请假规则" section
+        header_pattern = re.compile(r"^##\s*(Leave Rules|请假规则)\s*$", re.MULTILINE)
         header_match = header_pattern.search(content)
         if not header_match:
-            logging.info("请假规则标题未找到，使用默认请假次数")
+            logging.info("Leave rules header not found; using default quota")
             return default_quota
 
         section_start = header_match.end()
-        # 找到下一个以“## ”开头的标题，作为本节结束位置
+        # Find the next section header
         next_header_pattern = re.compile(r"^##\s+", re.MULTILINE)
         next_header_match = next_header_pattern.search(content, section_start)
         section_end = next_header_match.start() if next_header_match else len(content)
         section_text = content[section_start:section_end]
 
-        # 解析“每周请假 3 次”中的数字，允许可选空格
+        # Parse "每周请假 3 次" or "2 leaves per week"
         quota_match = re.search(r"每周请假\s*([0-9]+)\s*次", section_text)
+        if not quota_match:
+            quota_match = re.search(r"([0-9]+)\s*(?:leaves?|days?)\s*per\s*week", section_text, re.IGNORECASE)
         if quota_match:
             quota = int(quota_match.group(1))
-            logging.info(f"解析到每周请假次数: {quota}")
+            logging.info(f"Parsed weekly leave quota: {quota}")
             return quota
 
-        logging.info("未在请假规则中解析到具体次数，使用默认请假次数")
+        logging.info("Leave quota not found in section; using default")
         return default_quota
     except Exception as e:
-        logging.error(f"解析请假规则失败: {str(e)}，使用默认请假次数")
+        logging.error(f"Failed to parse leave rules: {str(e)}; using default")
         return default_quota
 
 def update_readme(content):
@@ -348,27 +378,28 @@ def update_readme(content):
 def generate_user_row(user, allowed_leave_quota):
     user_status = get_user_study_status(user)
     owner, repo = get_repo_info()
+    file_path, in_notes = get_user_file_path(user)
     if owner and repo:
-        repo_url = f"https://github.com/{owner}/{repo}/blob/main/{user}{FILE_SUFFIX}"
+        if in_notes:
+            repo_url = f"https://github.com/{owner}/{repo}/blob/main/{NOTES_DIR}/{user}{FILE_SUFFIX}"
+        else:
+            repo_url = f"https://github.com/{owner}/{repo}/blob/main/{user}{FILE_SUFFIX}"
     else:
         # Fallback to local if repo info is unavailable
-        repo_url = f"{user}{FILE_SUFFIX}"
+        repo_url = f"{NOTES_DIR}/{user}{FILE_SUFFIX}" if in_notes else f"{user}{FILE_SUFFIX}"
     # replace the username with a markdown link
     user_link = f"[{user}]({repo_url})"
     new_row = f"| {user_link} |"
     is_eliminated = False
 
-    file_name_to_open = f"{user}{FILE_SUFFIX}"
-
     try:
-        with open(file_name_to_open, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
     except FileNotFoundError:
-        logging.error(f"Error: Could not find file {file_name_to_open}")
+        logging.error(f"Error: Could not find file {file_path}")
         return "| " + user_link + " | " + " ⭕️ |" * len(get_date_range()) + "\n"
 
     user_tz = get_user_timezone(file_content)
-
     now_local = datetime.now(user_tz)
     date_range = get_date_range()
     
